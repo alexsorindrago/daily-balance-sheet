@@ -14,9 +14,8 @@ import java.util.Iterator;
 public class Reader {
     private static final Logger log = LoggerFactory.getLogger(Reader.class);
 
-    public void readExcel() {
-        String filePath = "D:\\dev\\DailyBalanceSheet\\src\\main\\resources\\testExcelFile.xlsx";
-        File file = new File(filePath);
+    public void readExcel(String filepath) {
+        File file = new File(filepath);
 
         try {
             FileInputStream fis = new FileInputStream(file);
