@@ -1,13 +1,12 @@
 package com.fm.daily.balance.sheet;
 
-import com.fm.daily.balance.sheet.excel.reader.Reader;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SpringBootApplication
 public class DailyBalanceSheetApp {
 
     public static void main(String[] args) {
-        String filepath = "D:\\dev\\daily-balance-sheet\\src\\main\\resources\\example clients.xlsx";
-
-        Reader excelReader = new Reader();
-        excelReader.readExcel(filepath);
+        SpringApplication.run(DailyBalanceSheetApp.class, args);
     }
 }
