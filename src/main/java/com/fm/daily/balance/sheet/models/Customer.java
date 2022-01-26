@@ -14,5 +14,4 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Long id;
     public String name;
-    public Long invoiceId;
 }

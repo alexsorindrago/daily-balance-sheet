@@ -33,4 +33,22 @@ class InvoicesTest {
         boolean isPaid = updatedInvoices.get(0).isPaid;
         assertThat(isPaid).isTrue();
     }
+
+    @Test
+    void shouldCreateSupplierInvoice() {
+        // given
+        invoiceController.createSupplierInvoices();
+
+        // when
+        List<InvoiceDto> supplierInvoices = invoiceController.findSupplierInvoices();
+        assertThat(supplierInvoices).hasSize(2);
+
+        Long firstInvoiceId = supplierInvoices.get(0).id;
+        invoiceController.updateInvoice(firstInvoiceId);
+
+        // then
+        List<InvoiceDto> updatedInvoices = invoiceController.findSupplierInvoices();
+        boolean isPaid = updatedInvoices.get(0).isPaid;
+        assertThat(isPaid).isTrue();
+    }
 }

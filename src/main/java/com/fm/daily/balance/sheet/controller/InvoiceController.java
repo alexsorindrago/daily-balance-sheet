@@ -5,8 +5,10 @@ import com.fm.daily.balance.sheet.dto.CustomerInvoiceVM;
 import com.fm.daily.balance.sheet.dto.InvoiceDto;
 import com.fm.daily.balance.sheet.models.Customer;
 import com.fm.daily.balance.sheet.models.Invoice;
+import com.fm.daily.balance.sheet.models.Supplier;
 import com.fm.daily.balance.sheet.repository.CustomerRepository;
 import com.fm.daily.balance.sheet.repository.InvoiceRepository;
+import com.fm.daily.balance.sheet.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,15 +34,20 @@ public class InvoiceController {
     private final CsvReader csvReader;
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
+    private final SupplierRepository supplierRepository;
 
     @Autowired
-    public InvoiceController(CsvReader csvReader, InvoiceRepository invoiceRepository, CustomerRepository customerRepository) {
+    public InvoiceController(CsvReader csvReader,
+                             InvoiceRepository invoiceRepository,
+                             CustomerRepository customerRepository,
+                             SupplierRepository supplierRepository) {
         this.csvReader = csvReader;
         this.invoiceRepository = invoiceRepository;
         this.customerRepository = customerRepository;
+        this.supplierRepository = supplierRepository;
     }
 
-    @PostMapping()
+    @PostMapping("/customers")
     public void createCustomerInvoices() {
         List<List<String>> entries = csvReader.loadFromFile(CUSTOMER_SOURCE);
 
@@ -63,6 +70,31 @@ public class InvoiceController {
             invoiceRepository.save(invoice);
         });
     }
+
+    @PostMapping("/suppliers")
+    public void createSupplierInvoices() {
+        List<List<String>> entries = csvReader.loadFromFile(SUPPLIER_SOURCE);
+
+        entries.forEach(entry -> {
+            CustomerInvoiceVM invoiceVM = new CustomerInvoiceVM();
+            invoiceVM.name = entry.get(0);
+            invoiceVM.number = entry.get(1);
+            invoiceVM.value = new BigDecimal(entry.get(2));
+            invoiceVM.dueDate = LocalDate.parse(entry.get(3), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+
+            Supplier supplier = new Supplier();
+            supplier.name = invoiceVM.name;
+            supplierRepository.save(supplier);
+
+            Invoice invoice = new Invoice();
+            invoice.number = invoiceVM.number;
+            invoice.value = invoiceVM.value;
+            invoice.dueDate = invoiceVM.dueDate;
+            invoice.supplierId = supplier.id;
+            invoiceRepository.save(invoice);
+        });
+    }
+
 
     @GetMapping("/customers")
     public List<InvoiceDto> findCustomerInvoices() {
@@ -91,12 +123,28 @@ public class InvoiceController {
 
     @GetMapping("/suppliers")
     public List<InvoiceDto> findSupplierInvoices() {
-        List<Invoice> invoices = invoiceRepository.findAll();
-        return invoices.stream()
-                .map(invoice -> toInvoiceDto(invoice, null))
-                .collect(Collectors.toList());
+        List<Supplier> suppliers = supplierRepository.findAll();
 
-        // TODO: add customer name
+        List<InvoiceDto> result = new ArrayList<>();
+
+        suppliers.forEach(supplier -> {
+            List<InvoiceDto> invoicesForSupplier = findInvoicesForSupplier(supplier.id);
+            result.addAll(invoicesForSupplier);
+        });
+
+        return result;
+    }
+
+    @GetMapping("/suppliers/{supplierId}")
+    public List<InvoiceDto> findInvoicesForSupplier(@PathVariable Long supplierId) {
+        Supplier supplier = supplierRepository.findById(supplierId)
+                .orElseThrow(() -> new RuntimeException());
+
+        List<Invoice> invoices = invoiceRepository.findAllBySupplierId(supplierId);
+
+        return invoices.stream()
+                .map(invoice -> toInvoiceDto(invoice, supplier.name))
+                .collect(Collectors.toList());
     }
 
     // FIXME: is this ok?
