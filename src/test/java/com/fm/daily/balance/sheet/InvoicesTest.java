@@ -11,17 +11,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-class InvoicesIT {
+class InvoicesTest {
 
-
-    @Autowired
-    CsvReader csvReader;
     @Autowired
     private InvoiceController invoiceController;
 
     @Test
     void shouldDisplayCustomers() {
         // given
+        invoiceController.createCustomerInvoices();
 
         // when
         List<InvoiceDto> customerInvoices = invoiceController.findCustomerInvoices();
