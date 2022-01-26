@@ -19,4 +19,6 @@ public class Invoice {
     public BigDecimal value;
     public LocalDate dueDate;
     public boolean isPaid;
+    public Long customerId;
+    public Long supplierId;
 }

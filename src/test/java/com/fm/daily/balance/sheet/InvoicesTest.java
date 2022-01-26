@@ -23,8 +23,14 @@ class InvoicesTest {
 
         // when
         List<InvoiceDto> customerInvoices = invoiceController.findCustomerInvoices();
+        assertThat(customerInvoices).hasSize(2);
 
         // then
-        assertThat(customerInvoices).hasSize(2);
+        Long firstInvoiceId = customerInvoices.get(0).id;
+        invoiceController.updateInvoice(firstInvoiceId);
+
+        List<InvoiceDto> updatedInvoices = invoiceController.findCustomerInvoices();
+        boolean isPaid = updatedInvoices.get(0).isPaid;
+        assertThat(isPaid).isTrue();
     }
 }

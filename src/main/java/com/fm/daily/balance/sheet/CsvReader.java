@@ -12,12 +12,12 @@ import java.util.List;
 
 @Component
 public class CsvReader {
+
     private static final String COMMA_DELIMITER = ",";
 
     public List<List<String>> loadFromFile(String filePath) {
         List<List<String>> records = new ArrayList<>();
 
-        // TODO: skip header
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             br.readLine();
             String line;

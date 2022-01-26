@@ -5,16 +5,20 @@ import com.fm.daily.balance.sheet.dto.CustomerInvoiceVM;
 import com.fm.daily.balance.sheet.dto.InvoiceDto;
 import com.fm.daily.balance.sheet.models.Customer;
 import com.fm.daily.balance.sheet.models.Invoice;
-import com.fm.daily.balance.sheet.models.Supplier;
 import com.fm.daily.balance.sheet.repository.CustomerRepository;
 import com.fm.daily.balance.sheet.repository.InvoiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,7 @@ public class InvoiceController {
         this.customerRepository = customerRepository;
     }
 
+    @PostMapping()
     public void createCustomerInvoices() {
         List<List<String>> entries = csvReader.loadFromFile(CUSTOMER_SOURCE);
 
@@ -54,32 +59,69 @@ public class InvoiceController {
             invoice.number = invoiceVM.number;
             invoice.value = invoiceVM.value;
             invoice.dueDate = invoiceVM.dueDate;
+            invoice.customerId = customer.id;
             invoiceRepository.save(invoice);
         });
     }
 
+    @GetMapping("/customers")
     public List<InvoiceDto> findCustomerInvoices() {
-        List<Invoice> invoices = invoiceRepository.findAll();
-        return invoices.stream()
-                .map(invoice -> toInvoiceDto(invoice))
-                .collect(Collectors.toList());
+        List<Customer> customers = customerRepository.findAll();
 
-        //TODO:  add customer name
+        List<InvoiceDto> result = new ArrayList<>();
+
+        customers.forEach(customer -> {
+            List<InvoiceDto> invoicesForCustomer = findInvoicesForCustomer(customer.id);
+            result.addAll(invoicesForCustomer);
+        });
+        return result;
     }
 
+    @GetMapping("/customers/{customerId}")
+    public List<InvoiceDto> findInvoicesForCustomer(@PathVariable Long customerId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException());
+
+        List<Invoice> invoices = invoiceRepository.findAllByCustomerId(customerId);
+
+        return invoices.stream()
+                .map(invoice -> toInvoiceDto(invoice, customer.name))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/suppliers")
     public List<InvoiceDto> findSupplierInvoices() {
-        // get invoice data
         List<Invoice> invoices = invoiceRepository.findAll();
         return invoices.stream()
-                .map(invoice -> toInvoiceDto(invoice))
+                .map(invoice -> toInvoiceDto(invoice, null))
                 .collect(Collectors.toList());
 
-        // add customer name
+        // TODO: add customer name
     }
 
-    private InvoiceDto toInvoiceDto(Invoice invoice) {
+    // FIXME: is this ok?
+//    @PutMapping("/{invoiceId}")
+//    public void updateInvoice(Long invoiceId) {
+//        invoiceRepository.findById(invoiceId)
+//                .map(invoice -> {
+//                    invoice.isPaid = !invoice.isPaid;
+//                    return invoiceRepository.save(invoice);
+//                })
+//                .orElseThrow(() -> new RuntimeException());
+//    }
+
+    @PutMapping("/{invoiceId}")
+    public void updateInvoice(Long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException());
+        invoice.isPaid = !invoice.isPaid;
+        invoiceRepository.save(invoice);
+    }
+
+    private InvoiceDto toInvoiceDto(Invoice invoice, String name) {
         InvoiceDto dto = new InvoiceDto();
         dto.id = invoice.id;
+        dto.name = name;
         dto.number = invoice.number;
         dto.value = invoice.value;
         dto.dueDate = invoice.dueDate;
@@ -87,14 +129,4 @@ public class InvoiceController {
         return dto;
     }
 
-
-    public List<Supplier> toSupplierList(List<List<String>> data) {
-        return data.stream()
-                .map(entry -> {
-                    Supplier supplier = new Supplier();
-                    supplier.name = entry.get(0);
-                    return supplier;
-                })
-                .collect(Collectors.toList());
-    }
 }
