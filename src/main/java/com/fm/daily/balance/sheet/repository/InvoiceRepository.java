@@ -14,4 +14,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     @Query("FROM Invoice i WHERE i.supplierId = :supplierId")
     List<Invoice> findAllBySupplierId(@Param("supplierId") Long supplierId);
+
+    @Query("FROM Invoice i WHERE i.salesmanId = :salesmanId")
+    List<Invoice> findAllBySalesmanId(@Param("salesmanId") Long salesmanId);
 }

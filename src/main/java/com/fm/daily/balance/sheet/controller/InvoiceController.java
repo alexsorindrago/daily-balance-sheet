@@ -117,6 +117,18 @@ public class InvoiceController {
                 .collect(Collectors.toList());
     }
 
+    @GetMapping("/salesmen/{salesmanId}")
+    public List<InvoiceDto> findInvoicesForSalesman(@PathVariable Long salesmanId) {
+        Salesman salesman = salesmanRepository.findById(salesmanId)
+                .orElseThrow(() -> new RuntimeException("salesman not found"));
+
+        List<Invoice> invoices = invoiceRepository.findAllBySalesmanId(salesmanId);
+
+        return invoices.stream()
+                .map(invoice -> toInvoiceDto(invoice, salesman.name))
+                .collect(Collectors.toList());
+    }
+
     @GetMapping("/suppliers")
     public List<InvoiceDto> findSupplierInvoices() {
         List<Supplier> suppliers = supplierRepository.findAll();

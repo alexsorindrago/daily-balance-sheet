@@ -23,6 +23,12 @@ class InvoicesTest {
         List<InvoiceDto> customerInvoices = invoiceController.findCustomerInvoices();
         assertThat(customerInvoices).hasSize(2);
 
+        List<InvoiceDto> invoicesForCustomer1 = invoiceController.findInvoicesForCustomer(1L);
+        assertThat(invoicesForCustomer1).hasSize(1);
+
+        List<InvoiceDto> invoicesForSalesman1 = invoiceController.findInvoicesForSalesman(5L);
+        assertThat(invoicesForSalesman1).hasSize(1);
+
         Long firstInvoiceId = customerInvoices.get(0).id;
         invoiceController.updateInvoice(firstInvoiceId);
 
