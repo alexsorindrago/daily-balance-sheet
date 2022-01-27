@@ -18,14 +18,11 @@ class InvoicesTest {
 
     @Test
     void shouldDisplayCustomers() {
-        // given
         invoiceController.createCustomerInvoices();
 
-        // when
         List<InvoiceDto> customerInvoices = invoiceController.findCustomerInvoices();
         assertThat(customerInvoices).hasSize(2);
 
-        // then
         Long firstInvoiceId = customerInvoices.get(0).id;
         invoiceController.updateInvoice(firstInvoiceId);
 
@@ -36,17 +33,14 @@ class InvoicesTest {
 
     @Test
     void shouldCreateSupplierInvoice() {
-        // given
         invoiceController.createSupplierInvoices();
 
-        // when
         List<InvoiceDto> supplierInvoices = invoiceController.findSupplierInvoices();
         assertThat(supplierInvoices).hasSize(2);
 
         Long firstInvoiceId = supplierInvoices.get(0).id;
         invoiceController.updateInvoice(firstInvoiceId);
 
-        // then
         List<InvoiceDto> updatedInvoices = invoiceController.findSupplierInvoices();
         boolean isPaid = updatedInvoices.get(0).isPaid;
         assertThat(isPaid).isTrue();

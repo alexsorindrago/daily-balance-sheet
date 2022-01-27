@@ -1,7 +1,6 @@
 package com.fm.daily.balance.sheet.controller;
 
-import com.fm.daily.balance.sheet.CsvReader;
-import com.fm.daily.balance.sheet.dto.CustomerInvoiceVM;
+import com.fm.daily.balance.sheet.util.CsvReader;
 import com.fm.daily.balance.sheet.dto.InvoiceDto;
 import com.fm.daily.balance.sheet.models.Customer;
 import com.fm.daily.balance.sheet.models.Invoice;
@@ -52,20 +51,14 @@ public class InvoiceController {
         List<List<String>> entries = csvReader.loadFromFile(CUSTOMER_SOURCE);
 
         entries.forEach(entry -> {
-            CustomerInvoiceVM invoiceVM = new CustomerInvoiceVM();
-            invoiceVM.name = entry.get(0);
-            invoiceVM.number = entry.get(1);
-            invoiceVM.value = new BigDecimal(entry.get(2));
-            invoiceVM.dueDate = LocalDate.parse(entry.get(3), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
-
             Customer customer = new Customer();
-            customer.name = invoiceVM.name;
+            customer.name = entry.get(0);
             customerRepository.save(customer);
 
             Invoice invoice = new Invoice();
-            invoice.number = invoiceVM.number;
-            invoice.value = invoiceVM.value;
-            invoice.dueDate = invoiceVM.dueDate;
+            invoice.number = entry.get(1);
+            invoice.value = new BigDecimal(entry.get(2));
+            invoice.dueDate = LocalDate.parse(entry.get(3), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
             invoice.customerId = customer.id;
             invoiceRepository.save(invoice);
         });
@@ -76,25 +69,18 @@ public class InvoiceController {
         List<List<String>> entries = csvReader.loadFromFile(SUPPLIER_SOURCE);
 
         entries.forEach(entry -> {
-            CustomerInvoiceVM invoiceVM = new CustomerInvoiceVM();
-            invoiceVM.name = entry.get(0);
-            invoiceVM.number = entry.get(1);
-            invoiceVM.value = new BigDecimal(entry.get(2));
-            invoiceVM.dueDate = LocalDate.parse(entry.get(3), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
-
             Supplier supplier = new Supplier();
-            supplier.name = invoiceVM.name;
+            supplier.name = entry.get(0);
             supplierRepository.save(supplier);
 
             Invoice invoice = new Invoice();
-            invoice.number = invoiceVM.number;
-            invoice.value = invoiceVM.value;
-            invoice.dueDate = invoiceVM.dueDate;
+            invoice.number = entry.get(1);
+            invoice.value = new BigDecimal(entry.get(2));
+            invoice.dueDate = LocalDate.parse(entry.get(3), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
             invoice.supplierId = supplier.id;
             invoiceRepository.save(invoice);
         });
     }
-
 
     @GetMapping("/customers")
     public List<InvoiceDto> findCustomerInvoices() {
@@ -112,7 +98,7 @@ public class InvoiceController {
     @GetMapping("/customers/{customerId}")
     public List<InvoiceDto> findInvoicesForCustomer(@PathVariable Long customerId) {
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException());
+                .orElseThrow(() -> new RuntimeException("customer not found"));
 
         List<Invoice> invoices = invoiceRepository.findAllByCustomerId(customerId);
 
@@ -138,7 +124,7 @@ public class InvoiceController {
     @GetMapping("/suppliers/{supplierId}")
     public List<InvoiceDto> findInvoicesForSupplier(@PathVariable Long supplierId) {
         Supplier supplier = supplierRepository.findById(supplierId)
-                .orElseThrow(() -> new RuntimeException());
+                .orElseThrow(() -> new RuntimeException("not found"));
 
         List<Invoice> invoices = invoiceRepository.findAllBySupplierId(supplierId);
 
@@ -147,21 +133,10 @@ public class InvoiceController {
                 .collect(Collectors.toList());
     }
 
-    // FIXME: is this ok?
-//    @PutMapping("/{invoiceId}")
-//    public void updateInvoice(Long invoiceId) {
-//        invoiceRepository.findById(invoiceId)
-//                .map(invoice -> {
-//                    invoice.isPaid = !invoice.isPaid;
-//                    return invoiceRepository.save(invoice);
-//                })
-//                .orElseThrow(() -> new RuntimeException());
-//    }
-
     @PutMapping("/{invoiceId}")
     public void updateInvoice(Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException());
+                .orElseThrow(() -> new RuntimeException("invoice not found"));
         invoice.isPaid = !invoice.isPaid;
         invoiceRepository.save(invoice);
     }
