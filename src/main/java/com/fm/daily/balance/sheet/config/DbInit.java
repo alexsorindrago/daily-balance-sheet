@@ -15,8 +15,8 @@ public class DbInit {
     @Bean
     CommandLineRunner loadData() {
         return args -> {
-            invoiceController.createSupplierInvoices();
-            invoiceController.createCustomerInvoices();
+//            invoiceController.createCustomerInvoices();
+//            invoiceController.createSupplierInvoices();
         };
     }
 }

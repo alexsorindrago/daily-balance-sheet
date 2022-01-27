@@ -21,4 +21,5 @@ public class Invoice {
     public boolean isPaid;
     public Long customerId;
     public Long supplierId;
+    public Long salesmanId;
 }

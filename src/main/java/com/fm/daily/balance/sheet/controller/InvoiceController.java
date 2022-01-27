@@ -1,13 +1,15 @@
 package com.fm.daily.balance.sheet.controller;
 
-import com.fm.daily.balance.sheet.util.CsvReader;
 import com.fm.daily.balance.sheet.dto.InvoiceDto;
 import com.fm.daily.balance.sheet.models.Customer;
 import com.fm.daily.balance.sheet.models.Invoice;
+import com.fm.daily.balance.sheet.models.Salesman;
 import com.fm.daily.balance.sheet.models.Supplier;
 import com.fm.daily.balance.sheet.repository.CustomerRepository;
 import com.fm.daily.balance.sheet.repository.InvoiceRepository;
+import com.fm.daily.balance.sheet.repository.SalesmanRepository;
 import com.fm.daily.balance.sheet.repository.SupplierRepository;
+import com.fm.daily.balance.sheet.util.CsvReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,16 +36,19 @@ public class InvoiceController {
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
     private final SupplierRepository supplierRepository;
+    private final SalesmanRepository salesmanRepository;
 
     @Autowired
     public InvoiceController(CsvReader csvReader,
                              InvoiceRepository invoiceRepository,
                              CustomerRepository customerRepository,
-                             SupplierRepository supplierRepository) {
+                             SupplierRepository supplierRepository,
+                             SalesmanRepository salesmanRepository) {
         this.csvReader = csvReader;
         this.invoiceRepository = invoiceRepository;
         this.customerRepository = customerRepository;
         this.supplierRepository = supplierRepository;
+        this.salesmanRepository = salesmanRepository;
     }
 
     @PostMapping("/customers")
@@ -55,11 +60,16 @@ public class InvoiceController {
             customer.name = entry.get(0);
             customerRepository.save(customer);
 
+            Salesman salesman = new Salesman();
+            salesman.name = entry.get(4);
+            salesmanRepository.save(salesman);
+
             Invoice invoice = new Invoice();
             invoice.number = entry.get(1);
             invoice.value = new BigDecimal(entry.get(2));
             invoice.dueDate = LocalDate.parse(entry.get(3), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
             invoice.customerId = customer.id;
+            invoice.salesmanId = salesman.id;
             invoiceRepository.save(invoice);
         });
     }
