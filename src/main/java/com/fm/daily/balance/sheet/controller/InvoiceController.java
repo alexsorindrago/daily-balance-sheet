@@ -46,15 +46,27 @@ public class InvoiceController {
         this.supplierRepository = supplierRepository;
     }
 
+    public void loadData() {
+
+    }
+
+    // TODO: createInvoices(List<Invoice> invoices)
+    public void createInvoices(List<Invoice> invoices) {
+        invoices.forEach(invoice -> invoiceRepository.save(invoice));
+    }
+
     @PostMapping("/customers")
     public void createCustomerInvoices() {
+        // TODO: list of objects, pass type as param
         List<List<String>> entries = csvReader.loadFromFile(CUSTOMER_SOURCE);
 
         entries.forEach(entry -> {
+            // TODO: if not new
             Customer customer = new Customer();
             customer.name = entry.get(0);
             customerRepository.save(customer);
 
+            // TODO: if not new, throw ex
             Invoice invoice = new Invoice();
             invoice.number = entry.get(1);
             invoice.value = new BigDecimal(entry.get(2));
@@ -82,12 +94,17 @@ public class InvoiceController {
         });
     }
 
+    // TODO: filter by date as param
+    // findInvoices(startDate, endDate?, invoiceType? Enum)
+    // findInvoicesForCustomer(customerId, startDate, endDate?)
+    // findInvoicesForSupplier(supplierId, startDate, endDate?)
     @GetMapping("/customers")
     public List<InvoiceDto> findCustomerInvoices() {
         List<Customer> customers = customerRepository.findAll();
 
         List<InvoiceDto> result = new ArrayList<>();
 
+        // TODO: use sql joins instead
         customers.forEach(customer -> {
             List<InvoiceDto> invoicesForCustomer = findInvoicesForCustomer(customer.id);
             result.addAll(invoicesForCustomer);
@@ -133,11 +150,19 @@ public class InvoiceController {
                 .collect(Collectors.toList());
     }
 
-    @PutMapping("/{invoiceId}")
-    public void updateInvoice(Long invoiceId) {
+    @PutMapping("/{invoiceId}/pay")
+    public void payInvoice(Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("invoice not found"));
-        invoice.isPaid = !invoice.isPaid;
+        invoice.isPaid = true;
+        invoiceRepository.save(invoice);
+    }
+
+    @PutMapping("/{invoiceId}/un-pay")
+    public void unPayInvoice(Long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("invoice not found"));
+        invoice.isPaid = false;
         invoiceRepository.save(invoice);
     }
 
