@@ -9,11 +9,13 @@ import com.fm.daily.balance.sheet.repository.CustomerRepository;
 import com.fm.daily.balance.sheet.repository.InvoiceRepository;
 import com.fm.daily.balance.sheet.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -50,7 +52,10 @@ public class InvoiceController {
 
     }
 
-    // TODO: createInvoices(List<Invoice> invoices)
+    public Customer createCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+
     public void createInvoices(List<Invoice> invoices) {
         invoices.forEach(invoice -> invoiceRepository.save(invoice));
     }
@@ -96,7 +101,6 @@ public class InvoiceController {
 
     // TODO: filter by date as param
     // findInvoices(startDate, endDate?, invoiceType? Enum)
-    // findInvoicesForCustomer(customerId, startDate, endDate?)
     // findInvoicesForSupplier(supplierId, startDate, endDate?)
     @GetMapping("/customers")
     public List<InvoiceDto> findCustomerInvoices() {
@@ -104,16 +108,29 @@ public class InvoiceController {
 
         List<InvoiceDto> result = new ArrayList<>();
 
-        // TODO: use sql joins instead
         customers.forEach(customer -> {
-            List<InvoiceDto> invoicesForCustomer = findInvoicesForCustomer(customer.id);
+            List<InvoiceDto> invoicesForCustomer = findAllInvoicesForCustomer(customer.id);
             result.addAll(invoicesForCustomer);
         });
         return result;
     }
 
     @GetMapping("/customers/{customerId}")
-    public List<InvoiceDto> findInvoicesForCustomer(@PathVariable Long customerId) {
+    public List<InvoiceDto> findAllByCustomerIdBetween(@PathVariable Long customerId,
+                                                       @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate startDate,
+                                                       @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate endDate) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("customer not found"));
+
+        List<Invoice> invoices = invoiceRepository.findAllByCustomerIdBetween(customerId, startDate, endDate);
+
+        return invoices.stream()
+                .map(invoice -> toInvoiceDto(invoice, customer.name))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/customers/{customerId}/all")
+    public List<InvoiceDto> findAllInvoicesForCustomer(@PathVariable Long customerId) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("customer not found"));
 

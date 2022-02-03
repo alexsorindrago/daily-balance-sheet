@@ -2,6 +2,7 @@ package com.fm.daily.balance.sheet;
 
 import com.fm.daily.balance.sheet.controller.InvoiceController;
 import com.fm.daily.balance.sheet.dto.InvoiceDto;
+import com.fm.daily.balance.sheet.models.Customer;
 import com.fm.daily.balance.sheet.models.Invoice;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,31 @@ class InvoicesTest {
         List<InvoiceDto> updatedInvoices2 = invoiceController.findCustomerInvoices();
         boolean isNotPaid = updatedInvoices2.get(0).isPaid;
         assertThat(isNotPaid).isTrue();
+    }
+
+    @Test
+    void shouldFindInvoicesBetweenDates() {
+        Customer customer = invoiceController.createCustomer(new Customer("Customer 1"));
+
+        Invoice customerInvoice1 = new Invoice();
+        customerInvoice1.customerName = "Customer 1";
+        customerInvoice1.number = "P1234";
+        customerInvoice1.value = new BigDecimal("100");
+        LocalDate dueDate = LocalDate.of(2022, 1, 25);
+        customerInvoice1.dueDate = dueDate;
+        customerInvoice1.customerId = customer.id;
+
+        Invoice customerInvoice2 = new Invoice();
+        customerInvoice2.customerName = "Customer 1";
+        customerInvoice2.number = "P1234";
+        customerInvoice2.value = new BigDecimal("100");
+        customerInvoice2.dueDate = LocalDate.of(2022, 1, 27);
+        customerInvoice2.customerId = customer.id;
+
+        invoiceController.createInvoices(List.of(customerInvoice1, customerInvoice2));
+
+        List<InvoiceDto> invoices = invoiceController.findAllByCustomerIdBetween(customer.id, dueDate, dueDate.plusDays(2));
+        assertThat(invoices).hasSize(2);
     }
 
     @Test
