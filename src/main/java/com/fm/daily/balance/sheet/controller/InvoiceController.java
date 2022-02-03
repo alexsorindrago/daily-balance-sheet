@@ -151,7 +151,7 @@ public class InvoiceController {
     }
 
     @PutMapping("/{invoiceId}/pay")
-    public void payInvoice(Long invoiceId) {
+    public void payInvoice(@PathVariable Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("invoice not found"));
         invoice.isPaid = true;

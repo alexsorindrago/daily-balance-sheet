@@ -21,11 +21,32 @@ class InvoicesTest {
 
     @Test
     void shouldDisplayCustomers() {
-        Invoice invoice = new Invoice();
-        invoice.customerName = "Customer 1";
-        invoice.number = "P1234";
-        invoice.value = new BigDecimal("100");
-        invoice.dueDate = LocalDate.of(2022, 1, 25);
+        Invoice customerInvoice1 = new Invoice();
+        customerInvoice1.customerName = "Customer 1";
+        customerInvoice1.number = "P1234";
+        customerInvoice1.value = new BigDecimal("100");
+        customerInvoice1.dueDate = LocalDate.of(2022, 1, 25);
+
+        Invoice customerInvoice2 = new Invoice();
+        customerInvoice2.customerName = "Customer 1";
+        customerInvoice2.number = "P1234";
+        customerInvoice2.value = new BigDecimal("100");
+        customerInvoice2.dueDate = LocalDate.of(2022, 1, 25);
+
+        invoiceController.createInvoices(List.of(customerInvoice1, customerInvoice2));
+
+        Invoice supplierInvoice1 = new Invoice();
+        supplierInvoice1.customerName = "Supplier 1";
+        supplierInvoice1.number = "P1234";
+        supplierInvoice1.value = new BigDecimal("100");
+        supplierInvoice1.dueDate = LocalDate.of(2022, 1, 25);
+
+        Invoice supplierInvoice2 = new Invoice();
+        supplierInvoice2.customerName = "Supplier 1";
+        supplierInvoice2.number = "P1234";
+        supplierInvoice2.value = new BigDecimal("100");
+        supplierInvoice2.dueDate = LocalDate.of(2022, 1, 25);
+        invoiceController.createInvoices(List.of(supplierInvoice1, supplierInvoice2));
 
         invoiceController.createCustomerInvoices();
 
