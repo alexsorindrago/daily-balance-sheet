@@ -14,4 +14,11 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Long id;
     public String name;
+
+    public Customer() {
+    }
+
+    public Customer(String name) {
+        this.name = name;
+    }
 }

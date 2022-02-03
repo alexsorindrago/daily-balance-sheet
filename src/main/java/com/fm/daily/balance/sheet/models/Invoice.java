@@ -15,6 +15,7 @@ public class Invoice {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Long id;
+    public String customerName;
     public String number;
     public BigDecimal value;
     public LocalDate dueDate;

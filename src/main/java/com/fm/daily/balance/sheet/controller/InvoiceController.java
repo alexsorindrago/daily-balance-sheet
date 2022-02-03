@@ -11,11 +11,13 @@ import com.fm.daily.balance.sheet.repository.SalesmanRepository;
 import com.fm.daily.balance.sheet.repository.SupplierRepository;
 import com.fm.daily.balance.sheet.util.CsvReader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -51,11 +53,25 @@ public class InvoiceController {
         this.salesmanRepository = salesmanRepository;
     }
 
+    public void loadData() {
+
+    }
+
+    public Customer createCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+
+    public void createInvoices(List<Invoice> invoices) {
+        invoices.forEach(invoice -> invoiceRepository.save(invoice));
+    }
+
     @PostMapping("/customers")
     public void createCustomerInvoices() {
+        // TODO: list of objects, pass type as param
         List<List<String>> entries = csvReader.loadFromFile(CUSTOMER_SOURCE);
 
         entries.forEach(entry -> {
+            // TODO: if not new
             Customer customer = new Customer();
             customer.name = entry.get(0);
             customerRepository.save(customer);
@@ -64,6 +80,7 @@ public class InvoiceController {
             salesman.name = entry.get(4);
             salesmanRepository.save(salesman);
 
+            // TODO: if not new, throw ex
             Invoice invoice = new Invoice();
             invoice.number = entry.get(1);
             invoice.value = new BigDecimal(entry.get(2));
@@ -92,6 +109,9 @@ public class InvoiceController {
         });
     }
 
+    // TODO: filter by date as param
+    // findInvoices(startDate, endDate?, invoiceType? Enum)
+    // findInvoicesForSupplier(supplierId, startDate, endDate?)
     @GetMapping("/customers")
     public List<InvoiceDto> findCustomerInvoices() {
         List<Customer> customers = customerRepository.findAll();
@@ -99,14 +119,28 @@ public class InvoiceController {
         List<InvoiceDto> result = new ArrayList<>();
 
         customers.forEach(customer -> {
-            List<InvoiceDto> invoicesForCustomer = findInvoicesForCustomer(customer.id);
+            List<InvoiceDto> invoicesForCustomer = findAllInvoicesForCustomer(customer.id);
             result.addAll(invoicesForCustomer);
         });
         return result;
     }
 
     @GetMapping("/customers/{customerId}")
-    public List<InvoiceDto> findInvoicesForCustomer(@PathVariable Long customerId) {
+    public List<InvoiceDto> findAllByCustomerIdBetween(@PathVariable Long customerId,
+                                                       @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate startDate,
+                                                       @DateTimeFormat(pattern = "yyyy-MM-dd") @RequestParam LocalDate endDate) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("customer not found"));
+
+        List<Invoice> invoices = invoiceRepository.findAllByCustomerIdBetween(customerId, startDate, endDate);
+
+        return invoices.stream()
+                .map(invoice -> toInvoiceDto(invoice, customer.name))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("/customers/{customerId}/all")
+    public List<InvoiceDto> findAllInvoicesForCustomer(@PathVariable Long customerId) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("customer not found"));
 
@@ -155,11 +189,19 @@ public class InvoiceController {
                 .collect(Collectors.toList());
     }
 
-    @PutMapping("/{invoiceId}")
-    public void updateInvoice(Long invoiceId) {
+    @PutMapping("/{invoiceId}/pay")
+    public void payInvoice(@PathVariable Long invoiceId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("invoice not found"));
-        invoice.isPaid = !invoice.isPaid;
+        invoice.isPaid = true;
+        invoiceRepository.save(invoice);
+    }
+
+    @PutMapping("/{invoiceId}/un-pay")
+    public void unPayInvoice(Long invoiceId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("invoice not found"));
+        invoice.isPaid = false;
         invoiceRepository.save(invoice);
     }
 
