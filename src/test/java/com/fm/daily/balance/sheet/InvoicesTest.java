@@ -1,9 +1,8 @@
 package com.fm.daily.balance.sheet;
 
 import com.fm.daily.balance.sheet.controller.InvoiceController;
-import com.fm.daily.balance.sheet.dto.InvoiceDto;
-import com.fm.daily.balance.sheet.models.Customer;
 import com.fm.daily.balance.sheet.models.Invoice;
+import com.fm.daily.balance.sheet.models.InvoiceType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,95 +20,69 @@ class InvoicesTest {
     private InvoiceController invoiceController;
 
     @Test
-    void shouldDisplayCustomers() {
-        Invoice customerInvoice1 = new Invoice();
-        customerInvoice1.customerName = "Customer 1";
-        customerInvoice1.number = "P1234";
-        customerInvoice1.value = new BigDecimal("100");
-        customerInvoice1.dueDate = LocalDate.of(2022, 1, 25);
-
-        Invoice customerInvoice2 = new Invoice();
-        customerInvoice2.customerName = "Customer 1";
-        customerInvoice2.number = "P1234";
-        customerInvoice2.value = new BigDecimal("100");
-        customerInvoice2.dueDate = LocalDate.of(2022, 1, 25);
-
-        invoiceController.createInvoices(List.of(customerInvoice1, customerInvoice2));
-
-        Invoice supplierInvoice1 = new Invoice();
-        supplierInvoice1.customerName = "Supplier 1";
-        supplierInvoice1.number = "P1234";
-        supplierInvoice1.value = new BigDecimal("100");
-        supplierInvoice1.dueDate = LocalDate.of(2022, 1, 25);
-
-        Invoice supplierInvoice2 = new Invoice();
-        supplierInvoice2.customerName = "Supplier 1";
-        supplierInvoice2.number = "P1234";
-        supplierInvoice2.value = new BigDecimal("100");
-        supplierInvoice2.dueDate = LocalDate.of(2022, 1, 25);
-        invoiceController.createInvoices(List.of(supplierInvoice1, supplierInvoice2));
-
-        invoiceController.createCustomerInvoices();
-
-        List<InvoiceDto> customerInvoices = invoiceController.findCustomerInvoices();
-        assertThat(customerInvoices).hasSize(2);
-
-        List<InvoiceDto> invoicesForCustomer1 = invoiceController.findInvoicesForCustomer(1L);
-        assertThat(invoicesForCustomer1).hasSize(1);
-
-        List<InvoiceDto> invoicesForSalesman1 = invoiceController.findInvoicesForSalesman(5L);
-        assertThat(invoicesForSalesman1).hasSize(1);
-
-        Long firstInvoiceId = customerInvoices.get(0).id;
-        invoiceController.payInvoice(firstInvoiceId);
-
-        List<InvoiceDto> updatedInvoices = invoiceController.findCustomerInvoices();
-        boolean isPaid = updatedInvoices.get(0).isPaid;
-        assertThat(isPaid).isTrue();
-
-        invoiceController.unPayInvoice(firstInvoiceId);
-        List<InvoiceDto> updatedInvoices2 = invoiceController.findCustomerInvoices();
-        boolean isNotPaid = updatedInvoices2.get(0).isPaid;
-        assertThat(isNotPaid).isTrue();
+    void shouldLoadData() {
+        invoiceController.loadData();
     }
 
     @Test
     void shouldFindInvoicesBetweenDates() {
-        Customer customer = invoiceController.createCustomer(new Customer("Customer 1"));
+        Invoice invoice1 = new Invoice();
+        invoice1.entityName = "Customer 1";
+        invoice1.number = "P1111";
+        invoice1.value = new BigDecimal("100");
+        invoice1.dueDate = LocalDate.of(2022, 1, 25);
+        invoice1.salesmanName = "Salesman 1";
+        invoice1.invoiceType = InvoiceType.CUSTOMER;
 
-        Invoice customerInvoice1 = new Invoice();
-        customerInvoice1.customerName = "Customer 1";
-        customerInvoice1.number = "P1234";
-        customerInvoice1.value = new BigDecimal("100");
-        LocalDate dueDate = LocalDate.of(2022, 1, 25);
-        customerInvoice1.dueDate = dueDate;
-        customerInvoice1.customerId = customer.id;
+        Invoice invoice2 = new Invoice();
+        invoice2.entityName = "Customer 2";
+        invoice2.number = "P2222";
+        invoice2.value = new BigDecimal("100");
+        invoice2.dueDate = LocalDate.of(2022, 1, 25);
+        invoice2.salesmanName = "Salesman 2";
+        invoice2.invoiceType = InvoiceType.CUSTOMER;
 
-        Invoice customerInvoice2 = new Invoice();
-        customerInvoice2.customerName = "Customer 1";
-        customerInvoice2.number = "P1234";
-        customerInvoice2.value = new BigDecimal("100");
-        customerInvoice2.dueDate = LocalDate.of(2022, 1, 27);
-        customerInvoice2.customerId = customer.id;
+        Invoice invoice3 = new Invoice();
+        invoice3.entityName = "Customer 2";
+        invoice3.number = "P3333";
+        invoice3.value = new BigDecimal("100");
+        invoice3.dueDate = LocalDate.of(2022, 1, 27);
+        invoice3.salesmanName = "Salesman 2";
+        invoice3.invoiceType = InvoiceType.CUSTOMER;
 
-        invoiceController.createInvoices(List.of(customerInvoice1, customerInvoice2));
+        Invoice invoice4 = new Invoice();
+        invoice4.entityName = "Supplier 1";
+        invoice4.number = "P4444";
+        invoice4.value = new BigDecimal("100");
+        invoice4.dueDate = LocalDate.of(2022, 1, 27);
+        invoice4.invoiceType = InvoiceType.SUPPLIER;
 
-        List<InvoiceDto> invoices = invoiceController.findAllByCustomerIdBetween(customer.id, dueDate, dueDate.plusDays(2));
+        invoiceController.createInvoices(List.of(invoice1, invoice2, invoice3, invoice4));
+
+        List<Invoice> invoices = invoiceController.findInvoices(null, null, null, null);
+        assertThat(invoices).hasSize(4);
+
+        invoices = invoiceController.findInvoices(InvoiceType.CUSTOMER, null, null, null);
+        assertThat(invoices).hasSize(3);
+
+        invoices = invoiceController.findInvoices(InvoiceType.CUSTOMER, "Customer 1", null, null);
+        assertThat(invoices).hasSize(1);
+
+        invoices = invoiceController.findInvoices(InvoiceType.SUPPLIER, "Supplier 1", null, null);
+        assertThat(invoices).hasSize(1);
+
+        invoices = invoiceController.findInvoices(
+                InvoiceType.CUSTOMER,
+                "Customer 2",
+                LocalDate.of(2022, 1, 27),
+                null);
+        assertThat(invoices).hasSize(1);
+
+        invoices = invoiceController.findInvoices(
+                InvoiceType.CUSTOMER,
+                "Customer 2",
+                LocalDate.of(2022, 1, 25),
+                LocalDate.of(2022, 1, 27));
         assertThat(invoices).hasSize(2);
-    }
-
-    @Test
-    void shouldCreateSupplierInvoice() {
-        invoiceController.createSupplierInvoices();
-
-        List<InvoiceDto> supplierInvoices = invoiceController.findSupplierInvoices();
-        assertThat(supplierInvoices).hasSize(2);
-
-        Long firstInvoiceId = supplierInvoices.get(0).id;
-        invoiceController.payInvoice(firstInvoiceId);
-
-        List<InvoiceDto> updatedInvoices = invoiceController.findSupplierInvoices();
-        boolean isPaid = updatedInvoices.get(0).isPaid;
-        assertThat(isPaid).isTrue();
     }
 }
